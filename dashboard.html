@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Équilibre — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;--border:rgba(255,255,255,0.06);--accent:#c8f564;--accent2:#6478f5;--accent3:#f564a9;--text:#e8e8f0;--muted:#6b6b80;--danger:#f56464;--warn:#f5c864;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;padding-bottom:80px;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 10% 20%,rgba(100,120,245,0.08) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 90% 80%,rgba(200,245,100,0.06) 0%,transparent 60%);pointer-events:none;z-index:0;}
+.grain{position:fixed;inset:0;opacity:0.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");pointer-events:none;z-index:1;}
+.wrap{max-width:1280px;margin:0 auto;padding:0 1.5rem;position:relative;z-index:2;}
+
+header{padding:1.25rem 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(10,10,15,0.92);backdrop-filter:blur(20px);z-index:100;}
+.logo{display:flex;align-items:center;gap:0.6rem;text-decoration:none;}
+.logo-mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--accent2),var(--accent3));display:flex;align-items:center;justify-content:center;font-size:14px;}
+.logo-text{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--text);}
+.logo-text span{color:var(--accent);}
+.desk-nav{display:flex;gap:0.2rem;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:3px;}
+.nav-tab{padding:0.4rem 0.85rem;border-radius:8px;font-size:0.75rem;cursor:pointer;color:var(--muted);border:none;background:none;font-family:'DM Sans',sans-serif;transition:all 0.2s;white-space:nowrap;}
+.nav-tab.active{background:var(--surface2);color:var(--text);}
+.hdr-right{display:flex;align-items:center;gap:0.6rem;}
+.score-pill{background:linear-gradient(135deg,var(--accent2),var(--accent));padding:0.3rem 0.85rem;border-radius:100px;font-size:0.72rem;font-weight:600;color:#000;}
+.logout-btn{background:rgba(245,100,100,0.1);border:1px solid rgba(245,100,100,0.2);color:var(--danger);padding:0.3rem 0.75rem;border-radius:100px;font-size:0.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+.page{display:none;padding:1.75rem 0 2rem;animation:fadeUp 0.4s ease both;}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:1.25rem;position:relative;overflow:hidden;transition:border-color 0.3s,transform 0.2s;}
+.card:hover{border-color:rgba(255,255,255,0.1);transform:translateY(-1px);}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.09),transparent);}
+.lbl{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem;}
+.lbl::before{content:'';width:3px;height:3px;border-radius:50%;background:var(--muted);}
+.grid{display:grid;gap:0.9rem;}
+.g12{grid-template-columns:repeat(12,1fr);}
+.c5{grid-column:span 5}.c4{grid-column:span 4}.c3{grid-column:span 3}.c6{grid-column:span 6}.c7{grid-column:span 7}.c12{grid-column:span 12}
+
+.hero{padding:2rem 0 1.25rem;display:grid;grid-template-columns:1fr auto;gap:1.5rem;align-items:center;}
+.hero-hi{font-size:0.75rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.35rem;}
+.hero-ttl{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:900;line-height:1.05;letter-spacing:-0.03em;}
+.hl{color:var(--accent);}
+.hero-sub{font-size:0.82rem;color:var(--muted);margin-top:0.4rem;}
+.ring-wrap{width:100px;height:100px;position:relative;flex-shrink:0;}
+.ring-wrap svg{transform:rotate(-90deg);}
+.ring-lbl{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring-num{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:var(--accent);line-height:1;}
+.ring-sub{font-size:0.52rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;}
+
+.big{font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:900;letter-spacing:-0.03em;line-height:1;}
+.big .u{font-size:1.2rem;color:var(--muted);font-weight:400;}
+.br{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;}
+.br-l{font-size:0.7rem;color:var(--muted);width:64px;flex-shrink:0;}
+.br-t{flex:1;height:5px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;}
+.br-f{height:100%;border-radius:3px;transform:scaleX(0);transform-origin:left;transition:transform 1.2s cubic-bezier(0.23,1,0.32,1);}
+.br-v{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);width:28px;text-align:right;}
+
+.hg{display:grid;grid-template-columns:repeat(3,1fr);gap:0.55rem;margin-top:0.4rem;}
+.hi{display:flex;flex-direction:column;align-items:center;gap:0.35rem;padding:0.65rem 0.3rem;border-radius:11px;background:var(--surface2);cursor:pointer;transition:all 0.2s;}
+.hi:hover{transform:scale(1.04);}
+.hi-ico{font-size:1.25rem;}
+.hi-nm{font-size:0.6rem;color:var(--muted);text-align:center;}
+.hi-chk{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.5rem;transition:all 0.3s;}
+.hi-chk.done{background:var(--accent);border-color:var(--accent);color:#000;}
+
+.chart-bars{display:flex;align-items:flex-end;gap:5px;height:100px;padding-top:6px;}
+.cb-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.cb{width:100%;border-radius:3px 3px 0 0;transition:height 0.8s cubic-bezier(0.23,1,0.32,1);min-height:3px;}
+.cd{font-size:0.58rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.chart-days{display:flex;justify-content:space-between;margin-top:4px;font-size:0.58rem;color:var(--muted);font-family:'DM Mono',monospace;}
+
+.sleep-bigs{display:flex;align-items:baseline;gap:0.4rem;margin:0.4rem 0 0.85rem;}
+.sleep-big{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:900;color:var(--accent2);}
+.sleep-u{font-size:0.9rem;color:var(--muted);}
+.sq{display:flex;gap:0.35rem;margin-bottom:0.85rem;}
+.sq-btn{flex:1;padding:0.45rem 0.3rem;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:0.68rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;text-align:center;}
+.sq-btn.active{border-color:var(--accent2);color:var(--accent2);background:rgba(100,120,245,0.1);}
+.tr{display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;}
+.mi{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.3rem 0.5rem;color:var(--text);font-size:0.75rem;font-family:'DM Mono',monospace;width:65px;outline:none;}
+.tp{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.3rem 0.5rem;color:var(--text);font-size:0.75rem;font-family:'DM Mono',monospace;outline:none;}
+.sv{background:rgba(200,245,100,0.1);border:1px solid rgba(200,245,100,0.2);color:var(--accent);font-size:0.7rem;padding:0.3rem 0.75rem;border-radius:100px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.sv:hover{background:rgba(200,245,100,0.2);}
+
+.badges-g{display:grid;grid-template-columns:repeat(4,1fr);gap:0.65rem;margin-top:0.4rem;}
+.badge{display:flex;flex-direction:column;align-items:center;gap:0.4rem;padding:0.9rem 0.4rem;border-radius:13px;background:var(--surface2);border:1px solid var(--border);transition:all 0.3s;position:relative;}
+.badge.on{border-color:rgba(200,245,100,0.3);background:rgba(200,245,100,0.05);}
+.badge.off{opacity:0.35;filter:grayscale(1);}
+.badge-e{font-size:1.7rem;}
+.badge-n{font-size:0.6rem;color:var(--muted);text-align:center;line-height:1.3;}
+.badge.on .badge-n{color:var(--accent);}
+.badge-new{position:absolute;top:-4px;right:-4px;background:var(--accent3);color:#fff;font-size:0.48rem;padding:2px 5px;border-radius:100px;font-weight:700;}
+
+.lb-list{display:flex;flex-direction:column;gap:0.55rem;margin-top:0.4rem;}
+.lb-row{display:flex;align-items:center;gap:0.65rem;padding:0.65rem 0.9rem;border-radius:11px;background:var(--surface2);transition:background 0.2s;}
+.lb-row.me{background:rgba(100,120,245,0.1);border:1px solid rgba(100,120,245,0.2);}
+.lb-rank{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;width:20px;text-align:center;flex-shrink:0;}
+.gold{color:#FFD700}.silver{color:#C0C0C0}.bronze{color:#CD7F32}
+.lb-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0;}
+.lb-inf{flex:1;}
+.lb-nm{font-size:0.78rem;font-weight:500;}
+.lb-st{font-size:0.64rem;color:var(--muted);}
+.lb-sc{font-family:'DM Mono',monospace;font-size:0.76rem;color:var(--accent);}
+
+.jnl-list{display:flex;flex-direction:column;gap:0.65rem;margin-bottom:1.25rem;}
+.jnl-entry{background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:0.9rem 1.1rem;}
+.jnl-dt{font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);margin-bottom:0.35rem;}
+.jnl-txt{font-size:0.82rem;line-height:1.6;}
+.jnl-compose{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.1rem;}
+.jnl-compose textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:0.75rem 0.9rem;color:var(--text);font-size:0.82rem;font-family:'DM Sans',sans-serif;resize:none;outline:none;min-height:90px;transition:border-color 0.2s;line-height:1.6;}
+.jnl-compose textarea:focus{border-color:rgba(100,120,245,0.4);}
+.jnl-compose textarea::placeholder{color:var(--muted);}
+.mood-row{display:flex;gap:0.4rem;margin:0.6rem 0;}
+.mb{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.35rem 0.5rem;font-size:0.9rem;cursor:pointer;transition:all 0.2s;}
+.mb:hover,.mb.active{background:rgba(100,120,245,0.15);border-color:rgba(100,120,245,0.3);transform:scale(1.1);}
+.cf{display:flex;justify-content:space-between;align-items:center;}
+.cf span{font-size:0.68rem;color:var(--muted);}
+.btn-p{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#000;border:none;padding:0.5rem 1.1rem;border-radius:100px;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.btn-p:hover{opacity:0.9;transform:translateY(-1px);}
+
+.notif-card{background:linear-gradient(135deg,rgba(100,120,245,0.07),rgba(245,100,169,0.04));border:1px solid rgba(100,120,245,0.14);border-radius:14px;padding:1.1rem 1.25rem;margin-bottom:0.75rem;}
+.nc-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.85rem;}
+.nc-ttl{font-size:0.85rem;font-weight:500;}
+.tgl{width:38px;height:20px;background:var(--surface2);border-radius:100px;cursor:pointer;position:relative;transition:background 0.3s;border:1px solid var(--border);}
+.tgl.on{background:var(--accent2);}
+.tgl::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:2px;left:2px;transition:transform 0.3s;}
+.tgl.on::after{transform:translateX(18px);}
+.nc-row{display:flex;align-items:center;gap:0.6rem;font-size:0.78rem;color:var(--muted);}
+
+.bc-center{display:flex;flex-direction:column;align-items:center;gap:0.85rem;padding:0.75rem 0;}
+.bc-circle{width:76px;height:76px;border-radius:50%;background:radial-gradient(circle,rgba(100,120,245,0.3),rgba(100,120,245,0.05));border:2px solid rgba(100,120,245,0.3);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;}
+.bc-circle::before{content:'';position:absolute;inset:-7px;border-radius:50%;border:1px solid rgba(100,120,245,0.14);animation:bRing 4s ease-in-out infinite;}
+@keyframes bRing{0%,100%{transform:scale(1);opacity:0.5}50%{transform:scale(1.14);opacity:1}}
+.bc-circle.active{animation:bPls 4s ease-in-out infinite;}
+@keyframes bPls{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+.bc-lbl{font-size:0.75rem;color:var(--muted);text-align:center;}
+.bc-lbl strong{display:block;color:var(--text);font-size:0.82rem;margin-bottom:0.15rem;}
+.bc-btn{background:var(--accent2);color:#fff;border:none;padding:0.42rem 1.25rem;border-radius:100px;font-size:0.75rem;font-family:'DM Sans',sans-serif;cursor:pointer;}
+
+.toast{position:fixed;bottom:5.5rem;left:50%;transform:translateX(-50%) translateY(60px);background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:0.65rem 1.4rem;font-size:0.78rem;z-index:999;transition:transform 0.35s cubic-bezier(0.23,1,0.32,1);white-space:nowrap;box-shadow:0 10px 40px rgba(0,0,0,0.4);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+.mob-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(18,18,26,0.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:0.6rem 0.5rem;display:flex;gap:0.2rem;z-index:200;}
+.mt{flex:1;display:flex;flex-direction:column;align-items:center;gap:0.2rem;padding:0.35rem 0.2rem;border-radius:9px;cursor:pointer;font-size:0.56rem;color:var(--muted);border:none;background:none;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.mt.active{color:var(--accent);background:rgba(200,245,100,0.07);}
+.mt-ico{font-size:1.1rem;}
+
+.pg-ttl{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;margin-bottom:1.25rem;}
+.tip-row{display:flex;gap:0.65rem;align-items:flex-start;padding:0.7rem;background:var(--surface2);border-radius:11px;margin-bottom:0.55rem;}
+.tip-ico{font-size:1.1rem;}
+.tip-ttl{font-size:0.78rem;font-weight:500;margin-bottom:0.15rem;}
+.tip-sub{font-size:0.68rem;color:var(--muted);}
+
+@media(max-width:900px){.desk-nav{display:none}.c5,.c4,.c3,.c6,.c7{grid-column:span 12}.hero{grid-template-columns:1fr}.ring-wrap{margin:0 auto}.badges-g{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<div class="wrap">
+  <header>
+    <a href="index.html" class="logo"><div class="logo-mark">🌿</div><div class="logo-text">Équi<span>libre</span></div></a>
+    <div class="desk-nav">
+      <button class="nav-tab active" onclick="goPage('home',this)">🏠 Accueil</button>
+      <button class="nav-tab" onclick="goPage('stats',this)">📊 Stats</button>
+      <button class="nav-tab" onclick="goPage('sleep',this)">🌙 Sommeil</button>
+      <button class="nav-tab" onclick="goPage('badges',this)">🏆 Badges</button>
+      <button class="nav-tab" onclick="goPage('friends',this)">👥 Amis</button>
+      <button class="nav-tab" onclick="goPage('journal',this)">📝 Journal</button>
+      <button class="nav-tab" onclick="goPage('notifs',this)">🔔 Rappels</button>
+    </div>
+    <div class="hdr-right">
+      <div class="score-pill" id="scorePill">—</div>
+      <button class="logout-btn" onclick="doLogout()">Quitter</button>
+    </div>
+  </header>
+
+  <!-- HOME -->
+  <div class="page active" id="pg-home">
+    <div class="hero">
+      <div>
+        <div class="hero-hi">Bonjour, <span id="uName">—</span></div>
+        <div class="hero-ttl">Votre journée<br>mérite un <span class="hl">équilibre</span></div>
+        <div class="hero-sub" id="heroSub">Chargement...</div>
+      </div>
+      <div class="ring-wrap">
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="7"/>
+          <circle id="ringArc" cx="50" cy="50" r="42" fill="none" stroke="url(#rg)" stroke-width="7" stroke-dasharray="264" stroke-dashoffset="264" stroke-linecap="round" style="transition:stroke-dashoffset 1.5s ease;"/>
+          <defs><linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6478f5"/><stop offset="100%" stop-color="#c8f564"/></linearGradient></defs>
+        </svg>
+        <div class="ring-lbl"><div class="ring-num" id="ringNum">—</div><div class="ring-sub">Score</div></div>
+      </div>
+    </div>
+
+    <div class="grid g12">
+      <div class="card c5">
+        <div class="lbl">Temps d'écran</div>
+        <div class="big" id="scDisplay">0<span class="u">h</span></div>
+        <div style="font-size:0.75rem;margin-bottom:0.9rem;" id="scStatus"></div>
+        <div class="br"><div class="br-l">Matin</div><div class="br-t"><div class="br-f" id="bm" style="background:var(--accent2);"></div></div><div class="br-v" id="vm">0h</div></div>
+        <div class="br"><div class="br-l">Après-midi</div><div class="br-t"><div class="br-f" id="ba" style="background:var(--accent3);"></div></div><div class="br-v" id="va">0h</div></div>
+        <div class="br"><div class="br-l">Soir</div><div class="br-t"><div class="br-f" id="be" style="background:var(--warn);"></div></div><div class="br-v" id="ve">0h</div></div>
+        <div style="margin-top:0.9rem;padding-top:0.7rem;border-top:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:var(--muted);margin-bottom:0.35rem;"><span>Objectif 5h</span><span id="gPct" style="color:var(--accent);">0%</span></div>
+          <div style="height:5px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div id="gBar" style="height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px;width:0%;transition:width 1.5s ease;"></div></div>
+        </div>
+        <div class="tr" style="margin-top:0.7rem;">
+          <span style="font-size:0.68rem;color:var(--muted);">Entrer (h) :</span>
+          <input type="number" class="mi" id="scIn" min="0" max="16" step="0.5" placeholder="4.5">
+          <button class="sv" onclick="saveScreen()">OK</button>
+        </div>
+      </div>
+
+      <div class="card c4">
+        <div class="lbl">Habitudes du jour</div>
+        <div class="hg" id="hGrid"></div>
+        <div style="margin-top:0.9rem;display:flex;justify-content:space-between;font-size:0.68rem;color:var(--muted);">
+          <span>Série</span><span style="color:var(--accent);font-family:'DM Mono',monospace;" id="strkDisp">🔥 0j</span>
+        </div>
+      </div>
+
+      <div class="card c3">
+        <div class="lbl">Score focus</div>
+        <div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;text-align:center;color:var(--accent2);" id="focNum">—</div>
+        <div style="font-size:0.7rem;color:var(--muted);text-align:center;margin-bottom:0.9rem;" id="focDesc">—</div>
+        <div style="display:flex;flex-direction:column;gap:0.45rem;">
+          <div style="display:flex;justify-content:space-between;font-size:0.7rem;"><span style="color:var(--muted);">Habitudes</span><span id="hCnt" style="font-family:'DM Mono',monospace;">0/6</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:0.7rem;"><span style="color:var(--muted);">Sommeil</span><span id="slpSum" style="font-family:'DM Mono',monospace;color:var(--accent2);">—</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:0.7rem;"><span style="color:var(--muted);">Streak</span><span id="strkSum" style="font-family:'DM Mono',monospace;color:var(--warn);">—</span></div>
+        </div>
+      </div>
+
+      <div class="card c6">
+        <div class="lbl">Pause respiration</div>
+        <div class="bc-center">
+          <div class="bc-circle" id="bCircle" onclick="toggleBreath()"><span style="font-size:1.35rem;">🌬️</span></div>
+          <div class="bc-lbl" id="bLbl"><strong>Exercice 4-4-6</strong>Réduisez le stress en 2 min</div>
+          <button class="bc-btn" id="bBtn" onclick="toggleBreath()">Commencer</button>
+        </div>
+      </div>
+
+      <div class="card c6">
+        <div class="lbl">Objectifs hebdo</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;">
+          <div style="display:flex;align-items:center;gap:0.65rem;padding:0.5rem 0.7rem;border-radius:9px;background:var(--surface2);"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;"></div><div style="flex:1;font-size:0.72rem;">Écran &lt; 5h/jour</div><div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);" id="g1">0/7</div></div>
+          <div style="display:flex;align-items:center;gap:0.65rem;padding:0.5rem 0.7rem;border-radius:9px;background:var(--surface2);"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent2);flex-shrink:0;"></div><div style="flex:1;font-size:0.72rem;">10 000 pas/jour</div><div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);" id="g2">0/7</div></div>
+          <div style="display:flex;align-items:center;gap:0.65rem;padding:0.5rem 0.7rem;border-radius:9px;background:var(--surface2);"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent3);flex-shrink:0;"></div><div style="flex:1;font-size:0.72rem;">Méditer 10 min</div><div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);" id="g3">0/7</div></div>
+          <div style="display:flex;align-items:center;gap:0.65rem;padding:0.5rem 0.7rem;border-radius:9px;background:var(--surface2);"><div style="width:6px;height:6px;border-radius:50%;background:var(--warn);flex-shrink:0;"></div><div style="flex:1;font-size:0.72rem;">Sans réseaux avant 9h</div><div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);" id="g4">0/7</div></div>
+        </div>
+      </div>
+
+      <div style="background:linear-gradient(135deg,rgba(100,120,245,0.08),rgba(245,100,169,0.05));border:1px solid rgba(100,120,245,0.15);border-radius:18px;padding:1.5rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;" class="c12">
+        <div><div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-style:italic;line-height:1.5;max-width:600px;">"Le vrai luxe du XXIe siècle, c'est l'attention — l'art de décider ce qui mérite votre présence."</div><div style="font-size:0.7rem;color:var(--muted);margin-top:0.5rem;">— Réflexion sur le bien-être numérique</div></div>
+        <div style="font-size:3rem;opacity:0.12;font-family:'Playfair Display',serif;line-height:1;flex-shrink:0;">"</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="page" id="pg-stats">
+    <div class="pg-ttl">📊 Évolution 7 jours</div>
+    <div class="grid g12">
+      <div class="card c6"><div class="lbl">Temps d'écran</div><div class="chart-bars" id="chScreen"></div><div class="chart-days" id="cdScreen"></div></div>
+      <div class="card c6"><div class="lbl">Habitudes complétées</div><div class="chart-bars" id="chHabits"></div><div class="chart-days" id="cdHabits"></div></div>
+      <div class="card c4"><div class="lbl">Moy. écran / jour</div><div style="font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:900;color:var(--accent2);" id="avgSc">—</div><div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem;">heures cette semaine</div></div>
+      <div class="card c4"><div class="lbl">Meilleur score</div><div style="font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:900;color:var(--accent);" id="bestSc">—</div><div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem;">cette semaine</div></div>
+      <div class="card c4"><div class="lbl">Taux habitudes</div><div style="font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:900;color:var(--accent3);" id="habRate">—</div><div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem;">sur 7 jours</div></div>
+    </div>
+  </div>
+
+  <!-- SLEEP -->
+  <div class="page" id="pg-sleep">
+    <div class="pg-ttl">🌙 Mode sommeil</div>
+    <div class="grid g12">
+      <div class="card c6">
+        <div class="lbl">Durée de sommeil</div>
+        <div class="sleep-bigs"><div class="sleep-big" id="slpH">7</div><div class="sleep-u">h</div><div class="sleep-big" id="slpM" style="margin-left:0.2rem;">30</div><div class="sleep-u">min</div></div>
+        <div class="sq">
+          <button class="sq-btn" onclick="setSlpQ('bad',this)">😴 Mauvais</button>
+          <button class="sq-btn active" onclick="setSlpQ('ok',this)">😐 Moyen</button>
+          <button class="sq-btn" onclick="setSlpQ('good',this)">😊 Bon</button>
+          <button class="sq-btn" onclick="setSlpQ('great',this)">🌟 Super</button>
+        </div>
+        <div class="tr">
+          <span style="font-size:0.7rem;color:var(--muted);">Coucher :</span>
+          <input type="time" class="tp" id="bedT" value="22:30">
+          <span style="font-size:0.7rem;color:var(--muted);">Lever :</span>
+          <input type="time" class="tp" id="wakeT" value="06:00">
+          <button class="sv" onclick="saveSleep()">OK</button>
+        </div>
+      </div>
+      <div class="card c6">
+        <div class="lbl">Conseils sommeil</div>
+        <div class="tip-row"><div class="tip-ico">📵</div><div><div class="tip-ttl">Pas d'écran 1h avant</div><div class="tip-sub">La lumière bleue perturbe la mélatonine</div></div></div>
+        <div class="tip-row"><div class="tip-ico">🌡️</div><div><div class="tip-ttl">Chambre à 18-19°C</div><div class="tip-sub">Température idéale pour le sommeil profond</div></div></div>
+        <div class="tip-row"><div class="tip-ico">⏰</div><div><div class="tip-ttl">Horaires réguliers</div><div class="tip-sub">Même heure tous les jours</div></div></div>
+      </div>
+      <div class="card c12"><div class="lbl">Sommeil cette semaine</div><div class="chart-bars" id="chSleep"></div><div class="chart-days" id="cdSleep"></div></div>
+    </div>
+  </div>
+
+  <!-- BADGES -->
+  <div class="page" id="pg-badges">
+    <div class="pg-ttl">🏆 Badges & Récompenses</div>
+    <p style="color:var(--muted);font-size:0.82rem;margin-bottom:1.25rem;">Maintenez vos bonnes habitudes pour débloquer des badges.</p>
+    <div class="card"><div class="lbl">Vos badges</div><div class="badges-g" id="bGrid"></div></div>
+  </div>
+
+  <!-- FRIENDS -->
+  <div class="page" id="pg-friends">
+    <div class="pg-ttl">👥 Classement amis</div>
+    <div class="grid g12">
+      <div class="card c7"><div class="lbl">Classement cette semaine</div><div class="lb-list" id="lbList"></div></div>
+      <div class="card c5">
+        <div class="lbl">Inviter un ami</div>
+        <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.85rem;line-height:1.6;">Partagez ce lien pour rejoindre le classement !</p>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:0.65rem 0.9rem;font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);margin-bottom:0.65rem;word-break:break-all;" id="shareLink">—</div>
+        <button class="btn-p" onclick="copyLink()" style="width:100%;">📋 Copier le lien</button>
+        <div style="margin-top:1.25rem;"><div class="lbl">Votre position</div><div style="font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:900;color:var(--accent);" id="myRk">#—</div><div style="font-size:0.72rem;color:var(--muted);">parmi vos amis</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOURNAL -->
+  <div class="page" id="pg-journal">
+    <div class="pg-ttl">📝 Journal quotidien</div>
+    <div class="jnl-compose">
+      <div style="font-size:0.7rem;color:var(--muted);margin-bottom:0.45rem;" id="jDtLbl">—</div>
+      <textarea id="jTxt" placeholder="Comment s'est passée votre journée ? Vos pensées, ressentis, victoires du jour..."></textarea>
+      <div class="mood-row">
+        <span style="font-size:0.68rem;color:var(--muted);margin-right:0.2rem;">Humeur :</span>
+        <button class="mb active" onclick="setMood('😊',this)">😊</button>
+        <button class="mb" onclick="setMood('😐',this)">😐</button>
+        <button class="mb" onclick="setMood('😔',this)">😔</button>
+        <button class="mb" onclick="setMood('😤',this)">😤</button>
+        <button class="mb" onclick="setMood('🤩',this)">🤩</button>
+        <button class="mb" onclick="setMood('😴',this)">😴</button>
+      </div>
+      <div class="cf"><span id="jCC">0 / 500</span><button class="btn-p" onclick="saveJournal()">Enregistrer</button></div>
+    </div>
+    <div style="margin-top:1.25rem;"><div style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.85rem;">Entrées récentes</div><div class="jnl-list" id="jList"></div></div>
+  </div>
+
+  <!-- NOTIFS -->
+  <div class="page" id="pg-notifs">
+    <div class="pg-ttl">🔔 Rappels</div>
+    <div class="grid g12">
+      <div class="card c6">
+        <div class="lbl">Rappels quotidiens</div>
+        <div class="notif-card"><div class="nc-hdr"><div class="nc-ttl">🌅 Rappel matinal</div><div class="tgl on" id="t1" onclick="this.classList.toggle('on')"></div></div><div class="nc-row"><span>Heure :</span><input type="time" class="tp" value="08:00" id="nt1"></div></div>
+        <div class="notif-card"><div class="nc-hdr"><div class="nc-ttl">🧘 Pause bien-être</div><div class="tgl on" id="t2" onclick="this.classList.toggle('on')"></div></div><div class="nc-row"><span>Heure :</span><input type="time" class="tp" value="13:00" id="nt2"></div></div>
+        <div class="notif-card"><div class="nc-hdr"><div class="nc-ttl">🌙 Rappel sommeil</div><div class="tgl" id="t3" onclick="this.classList.toggle('on')"></div></div><div class="nc-row"><span>Heure :</span><input type="time" class="tp" value="22:00" id="nt3"></div></div>
+        <div class="notif-card"><div class="nc-hdr"><div class="nc-ttl">📊 Bilan du jour</div><div class="tgl on" id="t4" onclick="this.classList.toggle('on')"></div></div><div class="nc-row"><span>Heure :</span><input type="time" class="tp" value="21:00" id="nt4"></div></div>
+        <button class="btn-p" style="margin-top:0.75rem;width:100%;" onclick="saveNotifs()">Enregistrer</button>
+      </div>
+      <div class="card c6">
+        <div class="lbl">Activer les notifications</div>
+        <div style="background:rgba(245,200,100,0.08);border:1px solid rgba(245,200,100,0.2);border-radius:11px;padding:0.9rem;font-size:0.78rem;line-height:1.7;color:var(--muted);margin-bottom:0.9rem;">
+          ⚠️ Pour recevoir les rappels :<br>
+          1. Cliquez sur le cadenas 🔒 dans l'URL<br>
+          2. Autorisez les notifications<br>
+          3. Rechargez la page
+        </div>
+        <button class="btn-p" style="width:100%;" onclick="askNotifPerm()">🔔 Activer maintenant</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav class="mob-nav">
+  <button class="mt active" onclick="goPage('home',this,1)"><span class="mt-ico">🏠</span>Accueil</button>
+  <button class="mt" onclick="goPage('stats',this,1)"><span class="mt-ico">📊</span>Stats</button>
+  <button class="mt" onclick="goPage('sleep',this,1)"><span class="mt-ico">🌙</span>Sommeil</button>
+  <button class="mt" onclick="goPage('badges',this,1)"><span class="mt-ico">🏆</span>Badges</button>
+  <button class="mt" onclick="goPage('friends',this,1)"><span class="mt-ico">👥</span>Amis</button>
+  <button class="mt" onclick="goPage('journal',this,1)"><span class="mt-ico">📝</span>Journal</button>
+  <button class="mt" onclick="goPage('notifs',this,1)"><span class="mt-ico">🔔</span>Rappels</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getAuth,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import{getFirestore,doc,getDoc,setDoc,updateDoc,collection,getDocs,orderBy,query,limit}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const app=initializeApp({apiKey:"AIzaSyAXZURCpn20cJxod8WbNUw5JaWLKoGaaD4",authDomain:"global-467b3.firebaseapp.com",projectId:"global-467b3",storageBucket:"global-467b3.firebasestorage.app",messagingSenderId:"287601791180",appId:"1:287601791180:web:ae5b65a0e92a3bc8c73269"});
+const auth=getAuth(app),db=getFirestore(app);
+
+const HABITS=[{id:'walk',icon:'🏃',name:'Marche'},{id:'water',icon:'💧',name:'Eau'},{id:'read',icon:'📚',name:'Lecture'},{id:'meditate',icon:'🧘',name:'Méditation'},{id:'sleep',icon:'🌙',name:'Sommeil'},{id:'eat',icon:'🥗',name:'Repas'}];
+const BADGES=[
+  {id:'day1',e:'🌱',n:'Premier jour',desc:'1er jour',fn:d=>d.streak>=1},
+  {id:'wk',e:'🔥',n:'Une semaine',desc:'7j streak',fn:d=>d.streak>=7},
+  {id:'all',e:'⭐',n:'Parfait',desc:'6/6 habits',fn:d=>Object.values(d.habits||{}).filter(Boolean).length>=6},
+  {id:'early',e:'🌅',n:'Lève-tôt',desc:'Coucher ≤22h',fn:d=>d.sleep?.bedtime<='22:00'},
+  {id:'sc3',e:'📵',n:'Déconnecté',desc:'<3h écran',fn:d=>(d.screen_time||0)<=3},
+  {id:'jnl5',e:'📝',n:'Écrivain',desc:'5 entrées',fn:d=>(d.journal_count||0)>=5},
+  {id:'champ',e:'🏆',n:'Champion',desc:'30j streak',fn:d=>d.streak>=30},
+  {id:'slp8',e:'😴',n:'Bien dormi',desc:'8h sommeil',fn:d=>(d.sleep?.hours||0)>=8},
+];
+
+let cu=null,td={},wd=[],je=[],mood='😊';
+const todayStr=()=>new Date().toISOString().split('T')[0];
+const last7=()=>Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return d.toISOString().split('T')[0];});
+
+// NAV
+window.goPage=(id,el,mob=0)=>{
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pg-'+id).classList.add('active');
+  if(mob){document.querySelectorAll('.mt').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
+  else{document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
+  if(id==='stats')renderStats();
+  if(id==='badges')renderBadges();
+  if(id==='friends')renderFriends();
+  if(id==='journal')renderJournal();
+  if(id==='sleep')renderSleepChart();
+};
+
+// AUTH
+onAuthStateChanged(auth,async u=>{
+  if(!u){window.location.href='index.html';return;}
+  cu=u;
+  document.getElementById('uName').textContent=u.displayName||u.email.split('@')[0];
+  document.getElementById('jDtLbl').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('shareLink').textContent=`${location.origin}${location.pathname}?ref=${u.uid.slice(0,8)}`;
+  await loadData();
+  renderHome();
+});
+
+window.doLogout=async()=>{await signOut(auth);window.location.href='index.html';};
+
+async function loadData(){
+  const t=todayStr(),ref=doc(db,'users',cu.uid,'days',t);
+  const s=await getDoc(ref);
+  td=s.exists()?s.data():{screen_time:0,habits:{},streak:0,sleep:{hours:0,quality:'ok'},journal_count:0};
+  if(!s.exists())await setDoc(ref,td);
+  wd=await Promise.all(last7().map(async d=>{const s=await getDoc(doc(db,'users',cu.uid,'days',d));return{date:d,...(s.exists()?s.data():{screen_time:0,habits:{},streak:0,sleep:{hours:0}})};}));
+  try{const snap=await getDocs(query(collection(db,'users',cu.uid,'journal'),orderBy('timestamp','desc'),limit(10)));je=snap.docs.map(d=>({id:d.id,...d.data()}));}catch(e){je=[];}
+}
+
+async function sv(f,v){const ref=doc(db,'users',cu.uid,'days',todayStr());td[f]=v;await updateDoc(ref,{[f]:v});}
+
+function calcScore(){
+  const h=Object.values(td.habits||{}).filter(Boolean).length,sc=td.screen_time||0;
+  return Math.round(Math.min(100,h/6*60+Math.max(0,(5-sc)/5*40)));
+}
+
+function renderHome(){
+  const sc=td.screen_time||0,hh=Math.floor(sc),mm=Math.round((sc-hh)*60);
+  document.getElementById('scDisplay').innerHTML=`${hh}<span class="u">h</span>${mm>0?` ${mm}<span class="u">m</span>`:''}`;
+  const pct=Math.min(sc/5,1);
+  document.getElementById('scStatus').innerHTML=pct<0.7?'<span style="color:var(--accent)">✓ Objectif respecté</span>':'<span style="color:var(--warn)">⚠️ Proche de la limite</span>';
+  const m=Math.min(sc*0.28,2),a=Math.min(sc*0.48,3),e=Math.min(sc*0.24,2);
+  setTimeout(()=>{document.getElementById('bm').style.width=`${Math.min(m/2*100,100)}%`;document.getElementById('ba').style.width=`${Math.min(a/3*100,100)}%`;document.getElementById('be').style.width=`${Math.min(e/2*100,100)}%`;},300);
+  document.getElementById('vm').textContent=`${Math.floor(m)}h`;document.getElementById('va').textContent=`${Math.floor(a)}h`;document.getElementById('ve').textContent=`${Math.floor(e)}h`;
+  document.getElementById('gBar').style.width=`${Math.min(pct*100,100)}%`;document.getElementById('gPct').textContent=`${Math.round(pct*100)}%`;
+
+  const h=td.habits||{},cnt=Object.values(h).filter(Boolean).length;
+  document.getElementById('hGrid').innerHTML=HABITS.map(hb=>`<div class="hi" onclick="window.togHabit('${hb.id}')"><div class="hi-ico">${hb.icon}</div><div class="hi-nm">${hb.name}</div><div class="hi-chk ${h[hb.id]?'done':''}">${h[hb.id]?'✓':''}</div></div>`).join('');
+  document.getElementById('hCnt').textContent=`${cnt}/6`;
+  document.getElementById('strkDisp').textContent=`🔥 ${td.streak||0}j`;
+  document.getElementById('strkSum').textContent=`${td.streak||0} jours`;
+  document.getElementById('slpSum').textContent=td.sleep?.hours?`${td.sleep.hours}h`:'—';
+
+  const score=calcScore();
+  document.getElementById('focNum').textContent=score;
+  document.getElementById('focDesc').textContent=score>=80?'Excellente journée 🌟':score>=60?'Bonne progression 👍':'Continuez 💪';
+  document.getElementById('ringNum').textContent=score;
+  document.getElementById('scorePill').textContent=`Score ${score}`;
+  setTimeout(()=>document.getElementById('ringArc').style.strokeDashoffset=264-(264*score/100),300);
+  document.getElementById('heroSub').innerHTML=`${cnt}/6 habitudes · ${sc}h écran · streak ${td.streak||0}j`;
+}
+
+window.saveScreen=async()=>{
+  const v=parseFloat(document.getElementById('scIn').value);
+  if(isNaN(v)||v<0||v>16)return;
+  await sv('screen_time',v);renderHome();document.getElementById('scIn').value='';toast('Enregistré !');
+};
+
+window.togHabit=async id=>{
+  const h={...(td.habits||{})};h[id]=!h[id];
+  const all=HABITS.every(hb=>h[hb.id]);
+  if(all)td.streak=(td.streak||0)+1;
+  await sv('habits',h);if(all)await sv('streak',td.streak);
+  renderHome();
+};
+
+// STATS
+function renderStats(){
+  const labels=last7().map(d=>new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'short'}));
+  const scs=wd.map(d=>d.screen_time||0),hbs=wd.map(d=>Object.values(d.habits||{}).filter(Boolean).length);
+  drawChart('chScreen',scs,5,'var(--accent2)',labels,'cdScreen');
+  drawChart('chHabits',hbs,6,'var(--accent)',labels,'cdHabits');
+  document.getElementById('avgSc').textContent=(scs.reduce((a,b)=>a+b,0)/7).toFixed(1)+'h';
+  const scores=wd.map(d=>{const h=Object.values(d.habits||{}).filter(Boolean).length,sc=d.screen_time||0;return Math.round(Math.min(100,h/6*60+Math.max(0,(5-sc)/5*40)));});
+  document.getElementById('bestSc').textContent=Math.max(...scores);
+  document.getElementById('habRate').textContent=Math.round(hbs.reduce((a,b)=>a+b,0)/(7*6)*100)+'%';
+}
+
+function drawChart(cId,vals,mx,col,labels,lId){
+  const c=document.getElementById(cId),mv=Math.max(...vals,1);
+  c.innerHTML=vals.map((v,i)=>`<div class="cb-wrap"><div style="font-size:0.58rem;color:var(--muted);font-family:'DM Mono',monospace;">${v}</div><div class="cb" style="background:${col};height:${Math.round(v/mv*78)+3}px;opacity:${v/mx>0.8?1:0.55};"></div></div>`).join('');
+  if(lId)document.getElementById(lId).innerHTML=labels.map(l=>`<span>${l}</span>`).join('');
+}
+
+// SLEEP
+function renderSleepChart(){
+  const slps=wd.map(d=>d.sleep?.hours||0),labels=last7().map(d=>new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'short'}));
+  drawChart('chSleep',slps,10,'var(--accent3)',labels,'cdSleep');
+}
+window.setSlpQ=(q,el)=>{document.querySelectorAll('.sq-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');td.sleep={...td.sleep,quality:q};};
+window.saveSleep=async()=>{
+  const bed=document.getElementById('bedT').value,wake=document.getElementById('wakeT').value;
+  const[bh,bm]=bed.split(':').map(Number);let[wh,wm]=wake.split(':').map(Number);
+  if(wh<bh)wh+=24;
+  const hours=Math.round(((wh*60+wm)-(bh*60+bm))/60*10)/10;
+  document.getElementById('slpH').textContent=Math.floor(hours);
+  document.getElementById('slpM').textContent=Math.round((hours%1)*60);
+  await sv('sleep',{hours,bedtime:bed,waketime:wake,quality:td.sleep?.quality||'ok'});
+  document.getElementById('slpSum').textContent=`${hours}h`;
+  toast('Sommeil enregistré ! 🌙');
+};
+
+// BADGES
+function renderBadges(){
+  document.getElementById('bGrid').innerHTML=BADGES.map(b=>{const on=b.fn(td);return`<div class="badge ${on?'on':'off'}">${on&&b.id==='day1'?'<div class="badge-new">NEW</div>':''}<div class="badge-e">${b.e}</div><div class="badge-n">${b.n}<br><span style="font-size:0.52rem;opacity:0.7;">${b.desc}</span></div></div>`;}).join('');}
+
+// FRIENDS
+function renderFriends(){
+  const nm=cu.displayName||cu.email.split('@')[0];
+  const score=calcScore();
+  const list=[
+    {n:'Alex M.',s:88,st:15,av:'🧑'},
+    {n:'Sarah L.',s:76,st:8,av:'👩'},
+    {n:nm,s:score,st:td.streak||0,av:'😊',me:true},
+    {n:'Tom B.',s:65,st:3,av:'🧔'},
+    {n:'Marie C.',s:58,st:1,av:'👱‍♀️'},
+  ].sort((a,b)=>b.s-a.s);
+  const md=['gold','silver','bronze'];
+  document.getElementById('lbList').innerHTML=list.map((f,i)=>`<div class="lb-row ${f.me?'me':''}"><div class="lb-rank ${md[i]||''}">${i+1}</div><div class="lb-av">${f.av}</div><div class="lb-inf"><div class="lb-nm">${f.n}${f.me?' (vous)':''}</div><div class="lb-st">🔥 ${f.st}j</div></div><div class="lb-sc">${f.s}</div></div>`).join('');
+  document.getElementById('myRk').textContent=`#${list.findIndex(f=>f.me)+1}`;
+}
+window.copyLink=()=>{navigator.clipboard.writeText(document.getElementById('shareLink').textContent).then(()=>toast('Lien copié ! 📋'));};
+
+// JOURNAL
+function renderJournal(){
+  const l=document.getElementById('jList');
+  if(!je.length){l.innerHTML='<div style="text-align:center;color:var(--muted);font-size:0.82rem;padding:1.5rem;">Aucune entrée. Écrivez la première !</div>';return;}
+  l.innerHTML=je.map(e=>`<div class="jnl-entry"><div class="jnl-dt">${new Date(e.timestamp?.toDate?e.timestamp.toDate():e.timestamp).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</div><div class="jnl-txt">${e.mood||'😊'} ${e.text}</div></div>`).join('');
+}
+window.setMood=(m,el)=>{mood=m;document.querySelectorAll('.mb').forEach(b=>b.classList.remove('active'));el.classList.add('active');};
+document.getElementById('jTxt')?.addEventListener('input',function(){document.getElementById('jCC').textContent=`${this.value.length} / 500`;});
+window.saveJournal=async()=>{
+  const txt=document.getElementById('jTxt').value.trim();
+  if(!txt)return toast('Écrivez quelque chose !');
+  if(txt.length>500)return toast('Max 500 caractères');
+  const entry={text:txt,mood,timestamp:new Date().toISOString()};
+  try{
+    const ref=doc(collection(db,'users',cu.uid,'journal'));
+    await setDoc(ref,entry);je.unshift({id:ref.id,...entry});
+    td.journal_count=(td.journal_count||0)+1;await sv('journal_count',td.journal_count);
+    document.getElementById('jTxt').value='';document.getElementById('jCC').textContent='0 / 500';
+    renderJournal();toast('Entrée sauvegardée ! 📝');
+  }catch(e){toast('Erreur sauvegarde');}
+};
+
+// NOTIFS
+window.saveNotifs=()=>{toast('Rappels enregistrés ! 🔔');schedReminders();};
+window.askNotifPerm=async()=>{
+  if(!('Notification' in window))return toast('Non supporté');
+  const p=await Notification.requestPermission();toast(p==='granted'?'Notifications activées ! 🔔':'Permission refusée');
+};
+function schedReminders(){
+  if(Notification.permission!=='granted')return;
+  const msgs=['🌅 Commencez bien votre journée !','🧘 Pause bien-être — respirez !','🌙 Préparez-vous à dormir','📊 Remplissez votre journal !'];
+  [1,2,3,4].forEach(i=>{
+    const tgl=document.getElementById('t'+i);
+    if(!tgl?.classList.contains('on'))return;
+    const tp=document.getElementById('nt'+i);if(!tp)return;
+    const[h,m]=tp.value.split(':').map(Number),now=new Date(),target=new Date();
+    target.setHours(h,m,0,0);if(target<=now)target.setDate(target.getDate()+1);
+    setTimeout(()=>{if(Notification.permission==='granted')new Notification('Équilibre',{body:msgs[i-1],icon:'🌿'});},target-now);
+  });
+}
+
+// BREATHING
+let bActive=false,bPhase=0,bTimer;
+const bPhases=[{t:'Inspirez...',s:'4 secondes',d:4000},{t:'Retenez...',s:'4 secondes',d:4000},{t:'Expirez...',s:'6 secondes',d:6000}];
+window.toggleBreath=()=>{
+  bActive=!bActive;
+  const c=document.getElementById('bCircle'),btn=document.getElementById('bBtn');
+  if(bActive){c.classList.add('active');btn.textContent='Arrêter';runB();}
+  else{c.classList.remove('active');btn.textContent='Commencer';clearTimeout(bTimer);document.getElementById('bLbl').innerHTML='<strong>Exercice 4-4-6</strong>Réduisez le stress en 2 min';bPhase=0;}
+};
+function runB(){if(!bActive)return;const p=bPhases[bPhase%3];document.getElementById('bLbl').innerHTML=`<strong>${p.t}</strong>${p.s}`;bPhase++;bTimer=setTimeout(runB,p.d);}
+
+// TOAST
+window.toast=msg=>{const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);};
+</script>
+</body>
+</html>
